@@ -1,0 +1,15 @@
+[Unit]
+Description=Go Api
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/root/apps/go-api
+ExecStart=/root/apps/go-api/go-api
+Restart=always
+RestartSec=4
+StandardOutput=inherit
+EnvironmentFile=/root/apps/go-api/config.env
+
+[Install]
+WantedBy=multi-user.target

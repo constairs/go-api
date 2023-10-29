@@ -1,18 +1,18 @@
 package main
 
 import (
+	"go-api/internal/config"
+	"go-api/internal/http-server/handlers/redirect"
+	"go-api/internal/http-server/handlers/url/remove"
+	"go-api/internal/http-server/handlers/url/save"
+	"go-api/internal/lib/logger/handlers/slogpretty"
+	"go-api/internal/lib/logger/sl"
+	"go-api/internal/storage/sqlite"
 	"log/slog"
 	"net/http"
 	"os"
-	"url-shortener/internal/config"
-	"url-shortener/internal/http-server/handlers/redirect"
-	"url-shortener/internal/http-server/handlers/url/remove"
-	"url-shortener/internal/http-server/handlers/url/save"
-	"url-shortener/internal/lib/logger/handlers/slogpretty"
-	"url-shortener/internal/lib/logger/sl"
-	"url-shortener/internal/storage/sqlite"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
@@ -29,7 +29,7 @@ func main() {
 	// logger: slog
 	log := setupLogger(cfg.Env)
 
-	log.Info("starting url-shortener", slog.String("env", cfg.Env))
+	log.Info("starting go-api", slog.String("env", cfg.Env))
 	log.Debug("debug messages are enabled")
 
 	// storage: sqlite
@@ -66,7 +66,7 @@ func main() {
 	router.Use(middleware.URLFormat)
 
 	router.Route("/url", func(r chi.Router) {
-		r.Use(middleware.BasicAuth("url-shortener", map[string]string{
+		r.Use(middleware.BasicAuth("go-api", map[string]string{
 			cfg.HTTPServer.User: cfg.HTTPServer.Password,
 		}))
 

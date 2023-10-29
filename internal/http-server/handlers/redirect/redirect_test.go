@@ -4,12 +4,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go-api/internal/http-server/handlers/redirect"
+	"go-api/internal/http-server/handlers/redirect/mocks"
+	"go-api/internal/lib/api"
+	"go-api/internal/lib/logger/handlers/slogdiscard"
 	"net/http/httptest"
 	"testing"
-	"url-shortener/internal/http-server/handlers/redirect"
-	"url-shortener/internal/http-server/handlers/redirect/mocks"
-	"url-shortener/internal/lib/api"
-	"url-shortener/internal/lib/logger/handlers/slogdiscard"
 )
 
 func TestSaveHandler(t *testing.T) {

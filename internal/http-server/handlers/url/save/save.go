@@ -6,10 +6,10 @@ import (
 
 	"log/slog"
 
-	resp "url-shortener/internal/lib/api/response"
-	"url-shortener/internal/lib/logger/sl"
-	"url-shortener/internal/lib/random"
-	"url-shortener/internal/storage"
+	resp "go-api/internal/lib/api/response"
+	"go-api/internal/lib/logger/sl"
+	"go-api/internal/lib/random"
+	"go-api/internal/storage"
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"

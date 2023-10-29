@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"url-shortener/internal/storage"
+	"go-api/internal/storage"
 
 	"github.com/mattn/go-sqlite3"
 )
