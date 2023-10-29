@@ -2,14 +2,14 @@ package remove
 
 import (
 	"errors"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
+	resp "go-api/internal/lib/api/response"
+	"go-api/internal/lib/logger/sl"
+	"go-api/internal/storage"
 	"log/slog"
 	"net/http"
-	resp "url-shortener/internal/lib/api/response"
-	"url-shortener/internal/lib/logger/sl"
-	"url-shortener/internal/storage"
 )
 
 //go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=URLRemover
