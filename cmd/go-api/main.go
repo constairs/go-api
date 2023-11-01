@@ -2,6 +2,7 @@ package main
 
 import (
 	"go-api/internal/config"
+	goodsSave "go-api/internal/http-server/handlers/goods/save"
 	"go-api/internal/http-server/handlers/redirect"
 	"go-api/internal/http-server/handlers/url/remove"
 	"go-api/internal/http-server/handlers/url/save"
@@ -39,20 +40,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = storage.DeleteURL("google")
-	if err != nil {
-		log.Error("failed to remove url", sl.Err(err))
-		os.Exit(1)
-	}
-
-	id, err := storage.SaveURL("https://google.com", "google")
-	if err != nil {
-		log.Error("failed to save url", sl.Err(err))
-		os.Exit(1)
-	}
-
-	log.Info("saved url", slog.Int64("id", id))
-
 	_ = storage
 
 	// router: chi, chi-render
@@ -65,6 +52,8 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
+	router.Get("/{alias}", redirect.New(log, storage))
+
 	router.Route("/url", func(r chi.Router) {
 		r.Use(middleware.BasicAuth("go-api", map[string]string{
 			cfg.HTTPServer.User: cfg.HTTPServer.Password,
@@ -75,7 +64,15 @@ func main() {
 			remove.New(log, storage))
 	})
 
-	router.Get("/{alias}", redirect.New(log, storage))
+	router.Route("/goods", func(r chi.Router) {
+		r.Use(middleware.BasicAuth("go-api", map[string]string{
+			cfg.HTTPServer.User: cfg.HTTPServer.Password,
+		}))
+
+		r.Post("/save", goodsSave.New(log, storage))
+		//r.Delete("/{alias}",
+		//	remove.New(log, storage))
+	})
 
 	log.Info("starting server", slog.String("address", cfg.Address))
 

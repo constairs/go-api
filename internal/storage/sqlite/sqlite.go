@@ -21,7 +21,7 @@ func New(storagePath string) (*Storage, error) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	stmt, err := db.Prepare(`
+	createUrlTable, err := db.Prepare(`
 		CREATE TABLE IF NOT EXISTS url(
 			id INTEGER PRIMARY KEY,
 			alias TEXT NOT NULL UNIQUE,
@@ -32,7 +32,26 @@ func New(storagePath string) (*Storage, error) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	_, err = stmt.Exec()
+	_, err = createUrlTable.Exec()
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	createGoodsTable, err := db.Prepare(`
+		CREATE TABLE IF NOT EXISTS goods(
+		    id INTEGER PRIMARY KEY,
+		    title TEXT NOT NULL,
+		    price REAL NOT NULL,
+		    description TEXT,
+		    imgUrl TEXT NOT NULL,
+		    weight INTEGER NOT NULL);
+		CREATE INDEX IF NOT EXISTS idx_good_name ON goods(title);
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	_, err = createGoodsTable.Exec()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -100,4 +119,25 @@ func (s *Storage) DeleteURL(alias string) error {
 	}
 
 	return nil
+}
+
+func (s *Storage) SaveGoods(title string, price float64, description string, imgUrl string, weight int32) (int64, error) {
+	const op = "storage.sqlite.SaveGoods"
+
+	stmt, err := s.db.Prepare("INSERT INTO goods(title, price, description, imgUrl, weight) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	res, err := stmt.Exec(title, price, description, imgUrl, weight)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return id, nil
 }
