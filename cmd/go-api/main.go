@@ -2,7 +2,12 @@ package main
 
 import (
 	"go-api/internal/config"
-	goodsSave "go-api/internal/http-server/handlers/goods/save"
+	productList "go-api/internal/http-server/handlers/product/list"
+	productRead "go-api/internal/http-server/handlers/product/read"
+	productSave "go-api/internal/http-server/handlers/product/save"
+	productGroupList "go-api/internal/http-server/handlers/productGroup/list"
+	productGroupRead "go-api/internal/http-server/handlers/productGroup/read"
+	productGroupSave "go-api/internal/http-server/handlers/productGroup/save"
 	"go-api/internal/http-server/handlers/redirect"
 	"go-api/internal/http-server/handlers/url/remove"
 	"go-api/internal/http-server/handlers/url/save"
@@ -34,13 +39,13 @@ func main() {
 	log.Debug("debug messages are enabled")
 
 	// storage: sqlite
-	storage, err := sqlite.New(cfg.StoragePath)
+	storageSqlite, err := sqlite.New(cfg.StoragePath)
 	if err != nil {
 		log.Error("failed to init storage", sl.Err(err))
 		os.Exit(1)
 	}
 
-	_ = storage
+	_ = storageSqlite
 
 	// router: chi, chi-render
 	router := chi.NewRouter()
@@ -52,26 +57,36 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	router.Get("/{alias}", redirect.New(log, storage))
+	router.Get("/{alias}", redirect.New(log, storageSqlite))
 
 	router.Route("/url", func(r chi.Router) {
 		r.Use(middleware.BasicAuth("go-api", map[string]string{
 			cfg.HTTPServer.User: cfg.HTTPServer.Password,
 		}))
 
-		r.Post("/", save.New(log, storage))
+		r.Post("/", save.New(log, storageSqlite))
 		r.Delete("/{alias}",
-			remove.New(log, storage))
+			remove.New(log, storageSqlite))
 	})
 
-	router.Route("/goods", func(r chi.Router) {
+	router.Route("/product", func(r chi.Router) {
 		r.Use(middleware.BasicAuth("go-api", map[string]string{
 			cfg.HTTPServer.User: cfg.HTTPServer.Password,
 		}))
 
-		r.Post("/save", goodsSave.New(log, storage))
-		//r.Delete("/{alias}",
-		//	remove.New(log, storage))
+		r.Post("/save", productSave.New(log, storageSqlite))
+		r.Get("/{product_id}", productRead.New(log, storageSqlite))
+		r.Post("/list", productList.New(log, storageSqlite))
+	})
+
+	router.Route("/productGroup", func(r chi.Router) {
+		r.Use(middleware.BasicAuth("go-api", map[string]string{
+			cfg.HTTPServer.User: cfg.HTTPServer.Password,
+		}))
+
+		r.Post("/save", productGroupSave.New(log, storageSqlite))
+		r.Get("/{product_group_id}", productGroupRead.New(log, storageSqlite))
+		r.Post("/list", productGroupList.New(log, storageSqlite))
 	})
 
 	log.Info("starting server", slog.String("address", cfg.Address))

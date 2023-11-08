@@ -1,14 +1,15 @@
 package save
 
 import (
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/render"
-	"github.com/go-playground/validator/v10"
 	resp "go-api/internal/lib/api/response"
 	"go-api/internal/lib/logger/sl"
 	"log/slog"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/render"
+	"github.com/go-playground/validator/v10"
 )
 
 type Request struct {
@@ -17,6 +18,7 @@ type Request struct {
 	Description string `json:"description,omitempty"`
 	ImgUrl      string `json:"imgUrl" validate:"required,url"`
 	Weight      string `json:"weight" validate:"required"`
+	GroupId     string `json:"groupId" validate:"required"`
 }
 
 type Response struct {
@@ -24,18 +26,19 @@ type Response struct {
 	Id          string  `json:"id"`
 	Title       string  `json:"title"`
 	Price       float64 `json:"price"`
+	GroupId     string  `json:"group_id"`
 	Description string  `json:"description,omitempty"`
-	ImgUrl      string  `json:"imgUrl"`
+	ImgUrl      string  `json:"img_url"`
 	Weight      int32   `json:"weight"`
 }
 
-type GoodsSaver interface {
-	SaveGoods(title string, price float64, description string, imgUrl string, weight int32) (int64, error)
+type ProductSaver interface {
+	SaveProduct(title string, price float64, description string, imgUrl string, weight int64, group_id int64) (int64, error)
 }
 
-func New(log *slog.Logger, goodsSaver GoodsSaver) http.HandlerFunc {
+func New(log *slog.Logger, productSaver ProductSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handlers.goods.save.New"
+		const op = "handlers.product.save.New"
 
 		log = log.With(
 			slog.String("op", op),
@@ -83,33 +86,45 @@ func New(log *slog.Logger, goodsSaver GoodsSaver) http.HandlerFunc {
 			return
 		}
 
-		i32Weight := int32(weight)
-
-		id, err := goodsSaver.SaveGoods(req.Title, priceFloat64, req.Description, req.ImgUrl, i32Weight)
+		group_id, err := strconv.ParseInt(req.GroupId, 10, 32)
 		if err != nil {
-			log.Error("failed to add goods", sl.Err(err))
+			log.Error("failed parse group id", sl.Err(err))
 
-			render.JSON(w, r, resp.Error("failed to add goods"))
+			render.JSON(w, r, resp.Error("failed parse group id"))
 
 			return
 		}
 
-		log.Info("goods added", slog.Int64("id", id))
+		id, err := productSaver.SaveProduct(req.Title, priceFloat64, req.Description, req.ImgUrl, weight, group_id)
+		if err != nil {
+			log.Error("failed to add product", sl.Err(err))
+
+			render.JSON(w, r, resp.Error("failed to add product"))
+
+			return
+		}
+
+		log.Info("product added", slog.Int64("id", id))
 
 		idString := strconv.FormatInt(id, 10)
 
-		responseOK(w, r, idString, req.Title, priceFloat64, req.Description, req.ImgUrl, i32Weight)
+		i32Weight := int32(weight)
+
+		groupIdString := strconv.FormatInt(group_id, 10)
+
+		responseOK(w, r, idString, req.Title, priceFloat64, req.Description, req.ImgUrl, i32Weight, groupIdString)
 	}
 }
 
-func responseOK(w http.ResponseWriter, r *http.Request, id string, title string, price float64, description string, imgUrl string, weight int32) {
+func responseOK(w http.ResponseWriter, r *http.Request, id string, title string, price float64, description string, img_url string, weight int32, group_id string) {
 	render.JSON(w, r, Response{
 		Response:    resp.OK(),
 		Id:          id,
 		Title:       title,
 		Price:       price,
 		Description: description,
-		ImgUrl:      imgUrl,
+		ImgUrl:      img_url,
 		Weight:      weight,
+		GroupId:     group_id,
 	})
 }
